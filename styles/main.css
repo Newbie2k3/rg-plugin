@@ -1,4 +1,4 @@
-.git-template-btn {
+.rg-btn {
     border: none;
     background-color: #28a745;
     background-image: linear-gradient(-180deg,#34d058,#28a745 90%);
@@ -12,35 +12,35 @@
     outline: none;
 }
 
-.git-template-btn:nth-child(2) {
+.rg-btn:nth-child(2) {
     margin-left: 125px;
 }
 
-.git-template-btn:active {
+.rg-btn:active {
     background-color: #279f43;
     box-shadow: inset 0 0.15em 0.3em rgba(27,31,35,.15);
 }
 
-.git-template-btn:hover {
+.rg-btn:hover {
     background-color: #269f42;
     background-image: linear-gradient(-180deg,#2fcb53,#269f42 90%);
     border-color: rgba(27,31,35,.5);
 }
 
-.git-template-btn.clicked::before {
+.rg-btn.clicked::before, .btn.clicked::before {
     content: 'Compied!';
     position: absolute;
     background: black;
-    border-radius: 5px;
-    bottom: -30px;
+    border-radius: 3px;
+    bottom: -33px;
     font-size: 10px;
     font-weight: normal;
-    padding: 5px;
+    padding: 8px;
     left: 50%;
     transform: translateX(-50%);
 }
 
-.git-template-btn.clicked::after {
+.rg-btn.clicked::after, .btn.clicked::after {
     content: '';
     position: absolute;
     width: 0;
@@ -51,4 +51,24 @@
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
     border-bottom: 10px solid black;
+}
+
+.btn.clicked::before {
+    bottom: -40px;
+    padding: 5px;
+}
+
+.btn.clicked::after {
+    transform: translate(-50%, 150%);
+}
+
+
+.compare-pr-header {
+    position: relative;
+}
+
+.compare-pr-header .btn {
+    position: absolute !important;
+    top: 0;
+    right: 0;
 }

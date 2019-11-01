@@ -13,7 +13,7 @@
             "38": "images/icon.png"
         },
         "default_title": "RG Extension",
-        "default_popup": "browseraction/popup.html"
+        "default_popup": "popup.html"
     },
     "background": {
         "scripts": [
