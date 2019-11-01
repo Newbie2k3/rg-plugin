@@ -4,13 +4,13 @@
     "manifest_version": 2,
     "description" : "Extension for Github and Redmine",
     "icons": {
-        "16": "images/icons.png",
-        "48": "images/icons.png"
+        "16": "images/icon.png",
+        "48": "images/icon.png"
     },
     "browser_action": {
         "default_icon": {
-            "19": "images/icons.png",
-            "38": "images/icons.png"
+            "19": "images/icon.png",
+            "38": "images/icon.png"
         },
         "default_title": "RG Extension",
         "default_popup": "browseraction/popup.html"
@@ -21,16 +21,21 @@
         ],
         "persistent": false
     },
-    "content_scripts": [{
-        "matches": [
-            "*github*",
-            "*dev.sun-asterisk*"
-        ],
-        "js": [
-            "scripts/contentscript.js"
-        ],
-        "run_at": "document_start"
-    }],
+    "content_scripts": [
+        {
+            "matches": [
+                "*://github.com/*/compare/*",
+                "*://dev.sun-asterisk.com/issues/*"
+            ],
+            "js": [
+                "scripts/content.js"
+            ],
+            "css": [
+                "styles/main.css"
+            ],
+            "run_at": "document_start"
+        }
+    ],
     "permissions": [
         "clipboardWrite",
         "storage"
