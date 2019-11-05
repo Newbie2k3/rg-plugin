@@ -24,8 +24,10 @@
     "content_scripts": [
         {
             "matches": [
-                "*://github.com/*/compare/*",
-                "*://dev.sun-asterisk.com/issues/*"
+                "*://github.com/*",
+                "*://chatwork.com/*",
+                "*://dev.sun-asterisk.com/issues/*",
+                "*://dev.sun-asterisk.com/redmine/issues*"
             ],
             "js": [
                 "scripts/content.js"
@@ -33,7 +35,7 @@
             "css": [
                 "styles/main.css"
             ],
-            "run_at": "document_start"
+            "run_at": "document_idle"
         }
     ],
     "permissions": [

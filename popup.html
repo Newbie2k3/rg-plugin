@@ -12,42 +12,46 @@
       <div class="content">
             <div class="row">
                 <div class="col-4">
-                    <div class="list-group" id="list-tab" role="tablist">
-                    <a class="list-group-item list-group-item-action active" id="list-home-list" data-toggle="list" href="#list-home" role="tab" aria-controls="home">Redmine</a>
-                    <a class="list-group-item list-group-item-action" id="list-profile-list" data-toggle="list" href="#list-profile" role="tab" aria-controls="profile">GitHub</a>
-                    <a class="list-group-item list-group-item-action" id="list-messages-list" data-toggle="list" href="#list-messages" role="tab" aria-controls="messages">Chatwork</a>
+                    <div class="list-group" id="tabs" role="tablist">
+                        <a class="list-group-item list-group-item-action" id="tk-tab" data-toggle="list" href="#tk-content" role="tab" aria-controls="home">Redmine</a>
+                        <a class="list-group-item list-group-item-action" id="git-tab" data-toggle="list" href="#git-content" role="tab" aria-controls="profile">GitHub</a>
+                        <a class="list-group-item list-group-item-action" id="cw-tab" data-toggle="list" href="#cw-content" role="tab" aria-controls="messages">Chatwork</a>
                     </div>
                 </div>
                 <div class="col-8">
                     <div class="tab-content" id="nav-tabContent">
-                        <div class="tab-pane fade show active" id="list-home" role="tabpanel" aria-labelledby="list-home-list">
+                        <div class="tab-pane fade" id="tk-content" role="tabpanel" aria-labelledby="tk-tab">
                             <form>
-                                <div class="form-group row">
-                                <label for="colFormLabelSm" class="col-sm-2 col-form-label">Ticket ID</label>
-                                <div class="col-sm-10">
+                                <div class="form-group">
+                                    <label for="tk-id">Ticket ID</label>
                                     <input type="text" class="form-control" id="tk-id">
                                 </div>
-                                </div>
-                                <div class="form-group row">
-                                    <label for="colFormLabelSm" class="col-sm-2 col-form-label">Description</label>
-                                    <div class="col-sm-10">
+                                <div class="form-group">
+                                    <label for="tk-description">Description</label>
                                     <input type="text" class="form-control" id="tk-description">
-                                    </div>
                                 </div>
                             </form>
+                            <h2 class="tk-title">Activity</h2>
+                            <div id="tk-list">
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="list-profile" role="tabpanel" aria-labelledby="list-profile-list">
+                        <div class="tab-pane fade" id="git-content" role="tabpanel" aria-labelledby="git-tab">
                             <form>
                                 <div class="form-group">
-                                <label for="exampleFormControlTextarea1">Template</label>
-                                <textarea class="form-control" id="git-template" rows="3"></textarea>
+                                    <label for="tk-description">Description</label>
+                                    <input type="text" class="form-control" id="git-description">
                                 </div>
+                                <div class="form-group">
+                                    <label for="exampleFormControlTextarea1">Template</label>
+                                    <textarea class="form-control" id="git-template" rows="3"></textarea>
+                                </div>
+                                <button id="git-fill-template" type="button" class="btn btn-primary">Fill Template</button>
                             </form>
                         </div>
-                        <div class="tab-pane fade" id="list-messages" role="tabpanel" aria-labelledby="list-messages-list">
+                        <div class="tab-pane fade" id="cw-content" role="tabpanel" aria-labelledby="cw-tab">
                             <form>
                                 <div class="form-group">
-                                <label for="exampleFormControlTextarea1">Message</label>
+                                    <label for="exampleFormControlTextarea1">Message</label>
                                     <textarea class="form-control" id="cw-message" rows="3"></textarea>
                                 </div>
                             </form>
