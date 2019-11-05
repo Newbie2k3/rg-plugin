@@ -1,89 +1,27 @@
 window.onload = function () {
-    var title = document.querySelector('#content h2');
+    if (isOnGitHub()) return;
 
-    if (title) {
-        var subject = document.querySelector('#content .subject h3');
-        var ticketId = title.textContent.split('#')[1];
-        var commitTitle = title.textContent + ' ' + subject.textContent;
+    var id = window.location.pathname.split('/').pop();
+    var content = document.querySelector('#content h2');
+    var title = content.textContent;
+    var description = document.querySelector('.subject h3').textContent;
+    var gitTemplateBtn = document.createElement('button');
+    
+    gitTemplateBtn.textContent = 'Get Content';
+    gitTemplateBtn.classList.add('rg-btn');
+    content.appendChild(gitTemplateBtn);
 
-        var gitTemplateBtn = document.createElement('button');
-        var commitTitleBtn = document.createElement('button');
-        
-        gitTemplateBtn.textContent = 'PR Template';
-        gitTemplateBtn.classList.add('rg-btn');
-
-        commitTitleBtn.textContent = 'Commit';
-        commitTitleBtn.classList.add('rg-btn');
-
-        gitTemplateBtn.addEventListener('click', function() {
-            document.addEventListener('copy', copyGitTemplateEvent);
-            document.execCommand('copy');
-            document.removeEventListener('copy', copyGitTemplateEvent);
-            gitTemplateBtn.classList.add('clicked');
-            gitTemplateBtn.disabled = true;
-
-            setTimeout(function () {
-                gitTemplateBtn.classList.remove('clicked');
-                gitTemplateBtn.disabled = false;
-            }, 1000);
+    gitTemplateBtn.addEventListener('click', function() {
+        chrome.extension.sendMessage({
+            type: 'tk-content', 
+            data: {id, title, description}
         });
 
-        commitTitleBtn.addEventListener('click', function () {
-            document.addEventListener('copy', copyCommitTitleEvent);
-            document.execCommand('copy');
-            document.removeEventListener('copy', copyCommitTitleEvent);
-            commitTitleBtn.classList.add('clicked');
-            commitTitleBtn.disabled = true;
-
-            setTimeout(function () {
-                commitTitleBtn.classList.remove('clicked');
-                commitTitleBtn.disabled = false;
-            }, 1000);
-        })
-
-        title.appendChild(gitTemplateBtn);
-        title.appendChild(commitTitleBtn);
-    }
-
-    var title = document.querySelector('.compare-pr-header');
-
-    if (title) {
-        var getFileChangesBtn = document.createElement('button');
-        
-        getFileChangesBtn.textContent = 'Get File Changes';
-        getFileChangesBtn.classList.add('btn', 'btn-primary');
-        title.appendChild(getFileChangesBtn);
-
-        getFileChangesBtn.addEventListener('click', function () {
-            document.addEventListener('copy', copyFileChangesEvent);
-            document.execCommand('copy');
-            document.removeEventListener('copy', copyFileChangesEvent);
-            getFileChangesBtn.classList.add('clicked');
-            getFileChangesBtn.disabled = true;
-
-            setTimeout(function () {
-                getFileChangesBtn.classList.remove('clicked');
-                getFileChangesBtn.disabled = false;
-            }, 1000);
-        });
-    }
-
-    function copyFileChangesEvent(event) {
-        var fileChangesText = getFileChanges();
-        event.clipboardData.setData('text/plain', fileChangesText);
-        event.preventDefault();
-    }
-
-    function copyGitTemplateEvent(event) {
-        var template = gitTemplate(ticketId);
-        event.clipboardData.setData('text/plain', template);
-        event.preventDefault();
-    }
-
-    function copyCommitTitleEvent(event) {
-        event.clipboardData.setData('text/plain', gitCommitTitle(commitTitle));
-        event.preventDefault();
-    }
+        setTimeout(function () {
+            gitTemplateBtn.classList.remove('clicked');
+            gitTemplateBtn.disabled = false;
+        }, 1000);
+    });
 }
 
 function gitTemplate(ticketId) {
@@ -143,4 +81,8 @@ function getFileChanges() {
     });
 
     return text;
+}
+
+function isOnGitHub() {
+    return window.location.origin.match('github');
 }
