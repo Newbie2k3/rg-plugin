@@ -91,22 +91,22 @@ function activeTab() {
 
 function syncChatWorkMessage() {
     var ticket = transformTicket();
-    var content = localStorage.chatworkMessage;
+    var message = chatworkMessageHtml();
 
     var infoContent = `
         <p class="info-title">Please review my PR</p>
         <p>${ticket.fullTitle}</p>
-        <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a>
+        <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a></p>
         <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
     `;
 
     var $messageHtml = $(`
-        <pre class="message-content">${content}</pre>
+        <p class="message-content">${message}</p>
         <div class="message-info">${infoContent}</div>`
     );
 
     $('#cw-message-preview').html($messageHtml);
-    $('#cw-message').val(content);
+    $('#cw-message').val(localStorage.chatworkMessage);
 }
 
 function syncTicketContent() {
@@ -185,6 +185,17 @@ function copyText(text) {
     document.addEventListener('copy', handleCopy);
     document.execCommand('copy');
     document.removeEventListener('copy', handleCopy);
+}
+
+function chatworkMessageHtml() {
+    var message = localStorage.chatworkMessage || '';
+    var messageBage =
+        `<br><div class="message-badge">
+            <span>TO</span>
+            <img src="images/avatar.png" />
+        </div>`;
+
+    return message.replace(/\[To:.+?\]/g, messageBage);
 }
 
 function chatworkMessage() {
