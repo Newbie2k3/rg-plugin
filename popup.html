@@ -45,7 +45,12 @@
                                     <label for="exampleFormControlTextarea1">Template</label>
                                     <textarea class="form-control" id="git-template" rows="3"></textarea>
                                 </div>
-                                <button id="git-fill-template" type="button" class="btn btn-primary">Fill Template</button>
+                                <div class="form-group">
+                                    <label for="tk-description">URL</label>
+                                    <input type="text" class="form-control" id="git-url">
+                                </div>
+                                <button id="git-fill-template" type="button" class="btn btn-primary">Complete PR</button>
+                                <button id="git-get-url" type="button" class="btn btn-primary">Get URL</button>
                             </form>
                         </div>
                         <div class="tab-pane fade" id="cw-content" role="tabpanel" aria-labelledby="cw-tab">
@@ -55,6 +60,10 @@
                                     <textarea class="form-control" id="cw-message" rows="3"></textarea>
                                 </div>
                             </form>
+                            <div id="cw-message-preview">
+                                
+                            </div>
+                            <button id="cw-fill-message" type="button" class="btn btn-primary">Copy</button>
                         </div>
                     </div>
                 </div>

@@ -1,17 +1,15 @@
-chrome.extension.onMessage.addListener(function (request) {
-    switch(request.type) {
-        case 'tk-content':
-            setTicket(request.data);
-            break;
-        case 'git-filechanges':
-            setGitFileChanges(request.data.fileChanges);
-            break;
-        case 'fill-template':
-            fillGitTemplate(request.data);
-            break;
-        case 'active-host':
-            setCurrentHost(request.data.host);
-    }
+chrome.extension.onMessage.addListener(
+    function (request, sender, sendResponse) {
+        switch(request.type) {
+            case 'tk-content':
+                setTicket(request.data);
+                break;
+            case 'git-filechanges':
+                setGitFileChanges(request.data.fileChanges);
+                break;
+            case 'active-host':
+                setCurrentHost(request.data.host);
+        }
 });
 
 function setTicket(data) {
@@ -26,15 +24,6 @@ function setTicket(data) {
 
 function setGitFileChanges(data) {
     localStorage.fileChanges = data;
-}
-
-function fillGitTemplate(data) {
-    chrome.tabs.getSelected(function (tab){
-        chrome.tabs.sendMessage(tab.id, {
-            type: 'fill-template',
-            data: data
-        });
-    });
 }
 
 function setCurrentHost(host) {

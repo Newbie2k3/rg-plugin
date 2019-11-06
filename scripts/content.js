@@ -2,21 +2,24 @@ window.onload = function () {
     sendMessageCurrentHost();
 
     if (isOnGitHub()) {
-        var fileChanges = getFileChanges();
-
-        if (fileChanges) {
-            chrome.extension.sendMessage({
-                type: 'git-filechanges',
-                data: {fileChanges}
-            });
-        }
-        
-        chrome.extension.onMessage.addListener(function (request) {
-            switch(request.type) {
-                case 'fill-template':
-                    fillGitTemplate(request.data);
-                    break;
-            }
+        chrome.extension.onMessage.addListener(
+            function (request, sender, sendResponse) {
+                switch(request.type) {
+                    case 'git-filechanges':
+                        var fileChanges = getFileChanges();
+                        console.log(fileChanges);
+                        sendResponse({fileChanges})
+                        break;
+                    case 'fill-template':
+                        fillGitTemplate(request.data);
+                        break;
+                    case 'git-get-url':
+                        sendResponse({
+                            url: window.location.href
+                        });
+                        break;
+                    
+                }
         });
     }
     

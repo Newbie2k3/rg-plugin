@@ -7,16 +7,52 @@ $(document).ready(function () {
 
 $(document).on('keydown keyup', '#cw-message', function () {
     localStorage.chatworkMessage = $(this).val();
+    syncChatWorkMessage();
 });
 
 $(document).on('click', '#git-fill-template', function () {
-    var description = $('#git-description').val();
-    var template = $('#git-template').val();
-    
-    chrome.extension.sendMessage({
-        type: 'fill-template',
-        data: {description, template}
+    chrome.tabs.getSelected(function (tab){
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'git-filechanges'
+        }, function (response) {
+            var ticket = getTicket();
+            ticket.fileChanges = response.fileChanges || ticket.fileChanges;
+            localStorage.ticket = JSON.stringify(ticket);
+            syncGitTemplate();
+            chrome.tabs.getSelected(function (tab){
+                var description = $('#git-description').val();
+                var template = $('#git-template').val();
+
+                chrome.tabs.sendMessage(tab.id, {
+                    type: 'git-fill-template',
+                    data: {description, template}
+                });
+            });
+        });
     });
+});
+
+$(document).on('click', '#git-get-url', function () {
+    chrome.tabs.getSelected(function (tab){
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'git-get-url'
+        }, function (response) {
+            var ticket = getTicket();
+
+            if (ticket) {
+                ticket.gitUrl = response.url || ticket.gitUrl;
+                localStorage.ticket = JSON.stringify(ticket);
+                syncGitTemplate();
+                syncChatWorkMessage();
+            }
+        });
+    });
+});
+
+$(document).on('click', '#cw-fill-message', function () {
+    copyText(
+        chatworkMessage()
+    );
 });
 
 $(document).on('click', '.tk-item button', function () {
@@ -54,27 +90,39 @@ function activeTab() {
 }
 
 function syncChatWorkMessage() {
-    $('#cw-message').val(localStorage.chatworkMessage);
+    var ticket = transformTicket();
+    var content = localStorage.chatworkMessage;
+
+    var infoContent = `
+        <p class="info-title">Please review my PR</p>
+        <p>${ticket.fullTitle}</p>
+        <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a>
+        <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
+    `;
+
+    var $messageHtml = $(`
+        <pre class="message-content">${content}</pre>
+        <div class="message-info">${infoContent}</div>`
+    );
+
+    $('#cw-message-preview').html($messageHtml);
+    $('#cw-message').val(content);
 }
 
 function syncTicketContent() {
-    var ticket = getTicket();
+    var ticket = transformTicket();
     var tickets = getTickets();
 
-    if (ticket) {
-        $('#tk-id').val(ticket.title);
-        $('#tk-description').val(ticket.description);
-    }
-
+    $('#tk-id').val(ticket.title);
+    $('#tk-description').val(ticket.description);
     $('#tk-content .tk-title').toggleClass('d-none', !tickets.length);
     
     tickets.forEach(ticket => {
-        var description = ticket.description;
-        var url = `https://dev.sun-asterisk.com/issues/${ticket.id}`;
+        ticket = transformTicket(ticket);
         var $ticketHtml = $(`
             <p class="tk-item">
-                <span>${description}</span>
-                <a href="${url}" target="_blank">${url}</a>
+                <span>${ticket.description}</span>
+                <a href="${ticket.url}" target="_blank">${ticket.url}</a>
                 <button data-id="${ticket.id}" class="btn btn-danger">
                     Remove
                 </button>
@@ -87,14 +135,33 @@ function syncTicketContent() {
 
 function syncGitTemplate() {
     var template = gitTemplate();
-    var ticket = getTicket();
-    var description = ticket ? ticket.title + ' ' + ticket.description : '';
+    var ticket = transformTicket();
 
-    template = template.replace('$ticketId', ticket ? ticket.id : '');
-    template = template.replace('$fileChanges', getFileChanges());
+    template = template.replace('$ticketId', ticket.id);
+    template = template.replace('$fileChanges', ticket.fileChanges);
 
     $('#git-template').val(template);
-    $('#git-description').val(description);
+    $('#git-description').val(ticket.fullTitle);
+    $('#git-url').val(ticket.gitUrl)
+}
+
+function transformTicket(ticket = null) {
+    var ticket = ticket || getTicket() || {};
+
+    return {
+        url: getTicketUrl(ticket),
+        id: ticket && ticket.id ? ticket.id : '',
+        title: ticket && ticket.title ? ticket.title : '',
+        description: ticket && ticket.description ? ticket.description : '',
+        gitUrl: ticket && ticket.gitUrl ? ticket.gitUrl : '',
+        fullTitle: ticket ? ticket.title + ' ' + ticket.description : '',
+        fileChanges: ticket && ticket.fileChanges ? ticket.fileChanges : '',
+    }
+}
+
+function getTicketUrl(ticket = null) {
+    var ticket = ticket || getTicket();
+    return ticket ? `https://dev.sun-asterisk.com/issues/${ticket.id}` : ''
 }
 
 function getTicket() {
@@ -105,12 +172,32 @@ function getTickets() {
     return localStorage.tickets ? JSON.parse(localStorage.tickets) : [];
 }
 
-function getFileChanges() {
-    return localStorage.fileChanges || '';
-}
-
 function gitCommitTitle(title) {
     return `git commit -m "${title}"`;
+}
+
+function copyText(text) {
+    function handleCopy(event) {
+        event.clipboardData.setData('text/plain', text);
+        event.preventDefault();
+    }
+
+    document.addEventListener('copy', handleCopy);
+    document.execCommand('copy');
+    document.removeEventListener('copy', handleCopy);
+}
+
+function chatworkMessage() {
+    var message = localStorage.chatworkMessage;
+    var ticket = transformTicket();
+
+    return (
+`${message}
+[info][title]Please review my PR[/title]${ticket.fullTitle}
+Github: ${ticket.gitUrl}
+Ticket: ${ticket.url}
+[/info]
+` );
 }
 
 function gitTemplate() {
