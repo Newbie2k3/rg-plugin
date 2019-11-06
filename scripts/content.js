@@ -7,10 +7,9 @@ window.onload = function () {
                 switch(request.type) {
                     case 'git-filechanges':
                         var fileChanges = getFileChanges();
-                        console.log(fileChanges);
                         sendResponse({fileChanges})
                         break;
-                    case 'fill-template':
+                    case 'git-fill-template':
                         fillGitTemplate(request.data);
                         break;
                     case 'git-get-url':
@@ -30,7 +29,7 @@ window.onload = function () {
         var description = document.querySelector('.subject h3').textContent;
         var gitTemplateBtn = document.createElement('button');
         
-        gitTemplateBtn.textContent = 'Get Content';
+        gitTemplateBtn.textContent = 'Set Current';
         gitTemplateBtn.classList.add('rg-btn');
         content.appendChild(gitTemplateBtn);
     
@@ -87,8 +86,8 @@ function getFileChanges() {
 }
 
 function fillGitTemplate(data) {
-    var description = document.querySelector('[name="issue[title]"]');
-    var template = document.getElementById('[name="pull_request[body]"]');
+    var description = document.querySelector('[name="pull_request[title]"]');
+    var template = document.querySelector('[name="pull_request[body]"]');
 
     if (description) {
         description.value = data.description; 

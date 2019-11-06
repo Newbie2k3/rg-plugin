@@ -16,8 +16,14 @@ $(document).on('click', '#git-fill-template', function () {
             type: 'git-filechanges'
         }, function (response) {
             var ticket = getTicket();
+            var tickets = getTickets();
+            var index = tickets.findIndex(ticketItem => {
+                return ticketItem.id == ticket.id;
+            });
             ticket.fileChanges = response.fileChanges || ticket.fileChanges;
+            tickets.splice(index, 1, ticket);
             localStorage.ticket = JSON.stringify(ticket);
+            localStorage.tickets = JSON.stringify(tickets);
             syncGitTemplate();
             chrome.tabs.getSelected(function (tab){
                 var description = $('#git-description').val();
@@ -40,8 +46,16 @@ $(document).on('click', '#git-get-url', function () {
             var ticket = getTicket();
 
             if (ticket) {
+                var tickets = getTickets();
+                var tickets = getTickets();
+                var index = tickets.findIndex(ticketItem => {
+                    return ticketItem.id == ticket.id;
+                });
+
                 ticket.gitUrl = response.url || ticket.gitUrl;
+                tickets.splice(index, 1, ticket);
                 localStorage.ticket = JSON.stringify(ticket);
+                localStorage.tickets = JSON.stringify(tickets);
                 syncGitTemplate();
                 syncChatWorkMessage();
             }
@@ -55,20 +69,66 @@ $(document).on('click', '#cw-fill-message', function () {
     );
 });
 
-$(document).on('click', '.tk-item button', function () {
+$(document).on('click', '#clear-all', function () {
+    localStorage.clear();
+    syncGitTemplate();
+    syncTicketContent();
+    syncChatWorkMessage();
+});
+
+$(document).on('click', '.btn-set-current', function () {
+    var id = $(this).attr('data-id');
+    var currentTicket = getTickets().find(ticket => {
+        return ticket.id == id;
+    });
+
+    if (currentTicket) {
+        localStorage.ticket = JSON.stringify(currentTicket);
+        syncCurrentTicket();
+        syncGitTemplate();
+        syncChatWorkMessage();
+    }
+});
+
+$(document).on('click', '.btn-remove', function () {
     var id = $(this).attr('data-id');
     var tickets = getTickets();
     var index = tickets.findIndex(ticket => {
         return ticket.id == id;
     });
 
-    $(this).parent('.tk-item').remove();
-
     if (index < 0) return;
 
     tickets.splice(index, 1);
     localStorage.tickets = JSON.stringify(tickets);
-    $('#tk-content .tk-title').toggleClass('d-none', !tickets.length);
+    $(this).closest('.tk-item').remove();
+    $('#tk-content .tk-activity').toggleClass('d-none', !tickets.length);
+});
+
+$(document).on('focus', '#git-content .form-control', function () {
+    $(this).select();
+});
+
+$(document).on('click', '.copy-on-click', function (event) {
+    var $this = $(this);
+    var text = $this.text();
+    copyText(text);
+    copyTooltip(event.clientY, event.clientX);
+});
+
+$(document).on('click', '#tk-tab', function () {
+    $('#page-title').html('Redmine');
+    localStorage.currentHost = 'dev.sun-asterisk.com';
+});
+
+$(document).on('click', '#git-tab', function () {
+    $('#page-title').html('Github');
+    localStorage.currentHost = 'github.com';
+});
+
+$(document).on('click', '#cw-tab', function () {
+    $('#page-title').html('Chatwork');
+    localStorage.currentHost = 'chatwork.com';
 });
 
 function activeTab() {
@@ -78,59 +138,102 @@ function activeTab() {
         case /github/.test(host):
             $('#git-tab').addClass('active');
             $('#git-content').addClass('show active');
+            $('#page-title').html('Github');
             break;
         case /chatwork/.test(host):
             $('#cw-tab').addClass('active');
             $('#cw-content').addClass('show active');
+            $('#page-title').html('Chatwork');
             break;
         default:
             $('#tk-tab').addClass('active');
             $('#tk-content').addClass('show active');
+            $('#page-title').html('Redmine');
     }
 }
 
 function syncChatWorkMessage() {
-    var ticket = transformTicket();
     var message = chatworkMessageHtml();
-
-    var infoContent = `
-        <p class="info-title">Please review my PR</p>
-        <p>${ticket.fullTitle}</p>
-        <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a></p>
-        <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
-    `;
-
-    var $messageHtml = $(`
-        <p class="message-content">${message}</p>
-        <div class="message-info">${infoContent}</div>`
-    );
+    
+    if (hasCurrentTicket()) {
+        var ticket = transformTicket();
+        var infoContent = `
+            <p class="info-title">Please review my PR</p>
+            <p>${ticket.fullTitle}</p>
+            <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a></p>
+            <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
+        `;
+        var $messageHtml = $(`
+            <pre class="message-content">${message}</pre>
+            <div class="message-info">${infoContent}</div>
+        `);
+    } else {
+        var $messageHtml = $(`
+            <pre class="message-content">${message}</pre>
+        `);
+    }
 
     $('#cw-message-preview').html($messageHtml);
     $('#cw-message').val(localStorage.chatworkMessage);
 }
 
 function syncTicketContent() {
-    var ticket = transformTicket();
-    var tickets = getTickets();
+    syncCurrentTicket();
+    syncTicketList();
+}
 
-    $('#tk-id').val(ticket.title);
-    $('#tk-description').val(ticket.description);
-    $('#tk-content .tk-title').toggleClass('d-none', !tickets.length);
-    
-    tickets.forEach(ticket => {
-        ticket = transformTicket(ticket);
-        var $ticketHtml = $(`
-            <p class="tk-item">
-                <span>${ticket.description}</span>
+function syncCurrentTicket() {
+    if (hasCurrentTicket()) {
+        var ticket = transformTicket();
+        var $ticketContent = $(`
+            <div class="tk-mark">
+                <i class="material-icons">star_border</i>
+            </div>
+            <p class="tk-title">${ticket.title}</p>
+            <div class="tk-info">
+                <p class="tk-description copy-on-click">
+                    ${ticket.description}
+                </p>
                 <a href="${ticket.url}" target="_blank">${ticket.url}</a>
-                <button data-id="${ticket.id}" class="btn btn-danger">
-                    Remove
-                </button>
-            </p>
+            </div>
+        `);
+
+        $('#tk-current').html($ticketContent);
+    } else {
+        $('#tk-current').empty();
+    }
+}
+
+function syncTicketList() {
+    var tickets = getTickets().map(ticket => transformTicket(ticket));
+
+    tickets.forEach(ticket => {
+        var $ticketHtml = $(`
+            <div class="tk-item">
+                <div class="tk-item-info">
+                    <p class="copy-on-click">${ticket.description}</p>
+                    <a href="${ticket.url}" target="_blank">${ticket.url}</a>
+                </div>
+                <div class="tk-item-action">
+                    <button data-id="${ticket.id}" class="btn btn-set-current">
+                        <i class="material-icons">star_border</i>
+                    </button>
+                    <button data-id="${ticket.id}" class="btn btn-remove">
+                        <i class="material-icons">clear</i>
+                    </button>
+                </div>
+            </div>
         `);
 
         $('#tk-list').append($ticketHtml);
     });
+
+    if (tickets.length) {
+        $('#tk-content .tk-activity').show();
+    } else {
+        $('#tk-content .tk-activity').hide();
+        $('#tk-list').empty();
+    }
 }
 
 function syncGitTemplate() {
@@ -146,7 +249,7 @@ function syncGitTemplate() {
 }
 
 function transformTicket(ticket = null) {
-    var ticket = ticket || getTicket() || {};
+    var ticket = ticket || getTicket();
 
     return {
         url: getTicketUrl(ticket),
@@ -160,8 +263,8 @@ function transformTicket(ticket = null) {
 }
 
 function getTicketUrl(ticket = null) {
-    var ticket = ticket || getTicket();
-    return ticket ? `https://dev.sun-asterisk.com/issues/${ticket.id}` : ''
+    var ticket = ticket || getTicket() || {};
+    return ticket.id ? `https://dev.sun-asterisk.com/issues/${ticket.id}` : '';
 }
 
 function getTicket() {
@@ -190,7 +293,7 @@ function copyText(text) {
 function chatworkMessageHtml() {
     var message = localStorage.chatworkMessage || '';
     var messageBage =
-        `<br><div class="message-badge">
+        `<div class="message-badge">
             <span>TO</span>
             <img src="images/avatar.png" />
         </div>`;
@@ -198,8 +301,22 @@ function chatworkMessageHtml() {
     return message.replace(/\[To:.+?\]/g, messageBage);
 }
 
+function copyTooltip(top, left) {
+    var $tooltip = $('<span class="copy-tooltip">Copied</span>');
+    $('.copy-tooltip').remove();
+    $tooltip.css({top: top - 35, left: left - 30});
+    $('body').append($tooltip);
+    
+    setTimeout(function () {
+        $tooltip.addClass('tooltip-fade-out');
+        setTimeout(function () {
+            $tooltip.remove();
+        }, 500);
+    }, 200)
+}
+
 function chatworkMessage() {
-    var message = localStorage.chatworkMessage;
+    var message = localStorage.chatworkMessage || '';
     var ticket = transformTicket();
 
     return (
@@ -209,6 +326,10 @@ Github: ${ticket.gitUrl}
 Ticket: ${ticket.url}
 [/info]
 ` );
+}
+
+function hasCurrentTicket() {
+    return !!localStorage.ticket;
 }
 
 function gitTemplate() {
