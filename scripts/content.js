@@ -30,7 +30,7 @@ window.onload = function () {
         var gitTemplateBtn = document.createElement('button');
         
         gitTemplateBtn.textContent = 'Set Current';
-        gitTemplateBtn.classList.add('rg-btn');
+        gitTemplateBtn.classList.add('btn', 'btn-success', 'btn-set-current');
         content.appendChild(gitTemplateBtn);
     
         gitTemplateBtn.addEventListener('click', function() {

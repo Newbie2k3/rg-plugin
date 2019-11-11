@@ -1,73 +1,61 @@
-.rg-btn {
-    border: none;
-    background-color: #28a745;
-    background-image: linear-gradient(-180deg,#34d058,#28a745 90%);
-    padding: 8px 10px;
-    border-radius: 3px;
-    color: white;
-    font-weight: 600;
-    margin: 0px 20px;
-    cursor: pointer;
-    position: absolute;
+
+.btn {
+    display: inline-block;
+    font-weight: 400;
+    color: #212529;
+    text-align: center;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
     outline: none;
+    transition: color .15s ease-in-out,
+        background-color .15s ease-in-out,
+        border-color .15s ease-in-out,
+        box-shadow .15s ease-in-out;
 }
 
-.rg-btn:nth-child(2) {
-    margin-left: 125px;
+.btn {
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
-.rg-btn:active {
-    background-color: #279f43;
-    box-shadow: inset 0 0.15em 0.3em rgba(27,31,35,.15);
+.btn-success {
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
 }
 
-.rg-btn:hover {
-    background-color: #269f42;
-    background-image: linear-gradient(-180deg,#2fcb53,#269f42 90%);
-    border-color: rgba(27,31,35,.5);
+.btn-success:not(:disabled):not(.disabled):active {
+    color: #fff;
+    background-color: #1e7e34;
+    border-color: #1c7430;
 }
 
-.rg-btn.clicked::before, .btn.clicked::before {
-    content: 'Compied!';
-    position: absolute;
-    background: black;
-    border-radius: 3px;
-    bottom: -33px;
-    font-size: 10px;
-    font-weight: normal;
-    padding: 8px;
-    left: 50%;
-    transform: translateX(-50%);
+.btn:hover {
+    text-decoration: none;
 }
 
-.rg-btn.clicked::after, .btn.clicked::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 0;
-    bottom: 0;
-    left: 50%;
-    transform: translate(-50%, 120%);
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    border-bottom: 10px solid black;
+.btn-success:hover {
+    color: #fff;
+    background-color: #218838;
+    border-color: #1e7e34;
 }
 
-.btn.clicked::before {
-    bottom: -40px;
-    padding: 5px;
+.btn-success:not(:disabled):not(.disabled):active:focus {
+    box-shadow: 0 0 0 0.2rem rgba(72,180,97,.5);
 }
 
-.btn.clicked::after {
-    transform: translate(-50%, 150%);
-}
-
-.compare-pr-header {
-    position: relative;
-}
-
-.compare-pr-header .btn {
-    position: absolute !important;
-    top: 0;
-    right: 0;
+.btn-set-current {
+    font-family: 'Quicksand', sans-serif;
+    margin-left: 20px;
+    font-weight: 700;
 }

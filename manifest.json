@@ -33,6 +33,7 @@
                 "scripts/content.js"
             ],
             "css": [
+                "styles/font.css",
                 "styles/main.css"
             ],
             "run_at": "document_idle"
