@@ -1,29 +1,31 @@
+import {
+    findIndex,
+    getTickets,
+    activeTicket,
+    updateTicketList,
+} from './lib/helpers.js'
+
 chrome.extension.onMessage.addListener(
-    function (request, sender, sendResponse) {
+    function (request) {
         switch(request.type) {
             case 'tk-content':
-                setTicket(request.data);
-                break;
-            case 'git-filechanges':
-                setGitFileChanges(request.data.fileChanges);
+                setCurrentTicket(request.data);
                 break;
             case 'active-host':
                 setCurrentHost(request.data.host);
         }
 });
 
-function setTicket(data) {
-    var tickets = localStorage.tickets ? JSON.parse(localStorage.tickets) : [];
-    var index = tickets.findIndex(ticket => {
-        return ticket.id == data.id;
-    });
-    index < 0 ? tickets.push(data) : tickets.splice(index, 1, data);
-    localStorage.tickets = JSON.stringify(tickets);
-    localStorage.ticket = JSON.stringify(data);
-}
+function setCurrentTicket(data) {
+    var tickets = getTickets();
+    var index = findIndex('id', data.id, tickets);
 
-function setGitFileChanges(data) {
-    localStorage.fileChanges = data;
+    if (index < 0) {
+        tickets.push(data);
+    }
+
+    updateTicketList(tickets);
+    activeTicket(data.id);
 }
 
 function setCurrentHost(host) {

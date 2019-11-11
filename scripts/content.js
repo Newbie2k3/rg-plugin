@@ -16,7 +16,7 @@ window.onfocus = function () {
 
 function registerGithubPage() {
     chrome.extension.onMessage.addListener(
-        function (request, sender, sendResponse) {
+        function (request, _, sendResponse) {
             switch(request.type) {
                 case 'git-filechanges':
                     var fileChanges = getFileChanges();
@@ -27,7 +27,7 @@ function registerGithubPage() {
                     break;
                 case 'git-get-url':
                     sendResponse({
-                        url: window.location.href
+                        gitUrl: window.location.href
                     });
                     break;
                 

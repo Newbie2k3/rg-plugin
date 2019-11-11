@@ -1,8 +1,18 @@
+import {
+    transformTicket,
+    getTickets,
+    copyText,
+    copyTooltip,
+    removeTicketFromList,
+    activeTicket,
+    updateTicket,
+    hasCurrentTicket,
+} from './lib/helpers.js';
+
+
 $(document).ready(function () {
     activeTab();
-    syncChatWorkMessage();
-    syncGitTemplate();
-    syncTicketContent();
+    syncAll();
 });
 
 $(document).on('keydown keyup', '#cw-message', function () {
@@ -17,8 +27,8 @@ $(document).on('click', '#git-fill-template', function () {
         }, function ({fileChanges}) {
             if (fileChanges) {
                 updateTicket({fileChanges});
+                syncGitTemplate();
             }
-            syncGitTemplate();
             chrome.tabs.getSelected(function (tab){
                 var description = $('#git-description').val();
                 var template = $('#git-template').val();
@@ -36,12 +46,10 @@ $(document).on('click', '#git-get-url', function () {
     chrome.tabs.getSelected(function (tab){
         chrome.tabs.sendMessage(tab.id, {
             type: 'git-get-url'
-        }, function ({url}) {
-            if (!url) return;
-
-            updateTicket({gitUrl: url});
-            syncGitTemplate();
-            syncChatWorkMessage();
+        }, function ({gitUrl}) {
+            if (!gitUrl) return;
+            updateTicket({gitUrl});
+            syncAll();
         });
     });
 });
@@ -54,26 +62,27 @@ $(document).on('click', '#cw-fill-message', function () {
 
 $(document).on('click', '#clear-all', function () {
     localStorage.clear();
-    syncGitTemplate();
-    syncTicketContent();
-    syncChatWorkMessage();
+    syncAll();
 });
 
 $(document).on('click', '.btn-set-current', function () {
     var ticketId = $(this).attr('data-id');
 
     activeTicket(ticketId);
-    syncCurrentTicket();
-    syncGitTemplate();
-    syncChatWorkMessage();
+    syncAll();
 });
 
 $(document).on('click', '.btn-remove', function () {
     var ticketId = $(this).attr('data-id');
+    var tickets = getTickets();
 
-    removeTicketFromList(ticketId);
-    $(this).closest('.tk-item').remove();
-    $('#tk-content .tk-activity').toggleClass('d-none', !getTickets().length);
+    removeTicketFromList(ticketId, tickets);
+    
+    if (tickets.length) {
+        activeTicket(tickets[0].id);
+    }
+    
+    syncAll();
 });
 
 $(document).on('focus', '#git-content .form-control', function () {
@@ -121,20 +130,33 @@ function activeTab() {
     }
 }
 
+function syncAll() {
+    syncGitTemplate();
+    syncTicketContent();
+    syncChatWorkMessage();
+}
+
 function syncChatWorkMessage() {
     var message = chatworkMessageHtml();
+    var isDisplay = hasCurrentTicket() || message;
     
+    $('#cw-message').val(localStorage.chatworkMessage);
+
+    if (!isDisplay) {
+        $('#cw-message-preview').hide();
+        return;
+    }
+
     if (hasCurrentTicket()) {
         var ticket = transformTicket();
-        var infoContent = `
-            <p class="info-title">Please review my PR</p>
-            <p>${ticket.fullTitle}</p>
-            <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a></p>
-            <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
-        `;
         var $messageHtml = $(`
             <pre class="message-content">${message}</pre>
-            <div class="message-info">${infoContent}</div>
+            <div class="message-info">
+                <p class="info-title">Please review my PR</p>
+                <p>${ticket.fullTitle}</p>
+                <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a></p>
+                <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
+            </div>
         `);
     } else {
         var $messageHtml = $(`
@@ -143,7 +165,7 @@ function syncChatWorkMessage() {
     }
 
     $('#cw-message-preview').html($messageHtml);
-    $('#cw-message').val(localStorage.chatworkMessage);
+    $('#cw-message-preview').show();
 }
 
 function syncTicketContent() {
@@ -176,6 +198,8 @@ function syncCurrentTicket() {
 function syncTicketList() {
     var tickets = getTickets().map(ticket => transformTicket(ticket));
 
+    $('#tk-list').empty();
+
     tickets.forEach(ticket => {
         var $ticketHtml = $(`
             <div class="tk-item">
@@ -201,7 +225,6 @@ function syncTicketList() {
         $('#tk-content .tk-activity').show();
     } else {
         $('#tk-content .tk-activity').hide();
-        $('#tk-list').empty();
     }
 }
 
@@ -217,134 +240,14 @@ function syncGitTemplate() {
     $('#git-url').val(ticket.gitUrl)
 }
 
-function transformTicket(ticket = null) {
-    var ticket = ticket || getCurrentTicket();
-    var title = valueWithDefault(ticket, 'title');
-    var description = valueWithDefault(ticket, 'description');
-
-    return {
-        title: title,
-        description: description,
-        fullTitle: title + ' ' + description,
-        url: getTicketUrl(ticket),
-        id: valueWithDefault(ticket, 'id'),
-        gitUrl: valueWithDefault(ticket, 'gitUrl'),
-        fileChanges: valueWithDefault(ticket, 'fileChanges'),
-    }
-}
-
-function getTicketUrl(ticket) {
-    var ticketId = valueWithDefault(ticket, 'id');
-
-    return ticketId ? `https://dev.sun-asterisk.com/issues/${ticketId}` : '';
-}
-
-function getCurrentTicket() {
-    var tickets = getTickets();
-    var index = findIndex('active', true, tickets);
-
-    return index >= 0 ? JSON.parse(tickets[index]) : null;
-}
-
-function getTickets() {
-    if (!localStorage.tickets) {
-        localStorage.tickets = JSON.stringify([]);
-    }
-
-    return JSON.parse(localStorage.tickets);
-}
-
-function valueWithDefault(object, key) {
-    return object && object[key] ? object[key] : '';
-}
-
-function copyText(text) {
-    function handleCopy(event) {
-        event.clipboardData.setData('text/plain', text);
-        event.preventDefault();
-    }
-
-    document.addEventListener('copy', handleCopy);
-    document.execCommand('copy');
-    document.removeEventListener('copy', handleCopy);
-}
-
 function chatworkMessageHtml() {
     var message = localStorage.chatworkMessage || '';
-    var messageBage =
-        `<div class="message-badge">
-            <span>TO</span>
-            <img src="images/avatar.png" />
-        </div>`;
+    var messageBage = `<div class="message-badge">
+                            <span>TO</span>
+                            <img src="images/avatar.png" />
+                       </div>`;
 
     return message.replace(/\[To:.+?\]/g, messageBage);
-}
-
-function copyTooltip(top, left) {
-    $('.copy-tooltip').remove();
-
-    var $tooltip = $('<span class="copy-tooltip">Copied</span>').css({
-        top: top - 35,
-        left: left - 30
-    });
-
-    $('body').append($tooltip);
-
-    setTimeout(function () {
-        $tooltip.addClass('tooltip-fade-out');
-        setTimeout(function () {
-            $tooltip.remove();
-        }, 500);
-    }, 200);
-}
-
-function removeTicketFromList(ticketId) {
-    var tickets = getTickets();
-    var index = findIndex('id', ticketId, tickets);
-
-    tickets.splice(index, 1);
-    updateTicketList(tickets);
-}
-
-function activeTicket(ticketId) {
-    var tickets = getTickets();
-    var indexActive = findIndex('active', true, tickets);
-    var indexUpdate = findIndex('id', ticketId, tickets);
-
-    if (indexUpdate >= 0) {
-        tickets[indexUpdate].active = true;
-
-        if (indexActive >= 0) {
-            tickets[indexActive].active = false;
-        }
-    }
-    
-    updateTicketList(tickets);
-}
-
-function updateTicket(ticketId = null, data = null) {
-    var tickets = getTickets();
-
-    if (!data) {
-        var index = findIndex('active', true, tickets);
-        data = ticketId;
-    } else {
-        var index = findIndex('id', ticketId, tickets);
-        data = data || {};
-    }
-
-    tickets[index] = {...tickets[index], ...data};
-    updateTicketList(tickets);
-}
-
-function updateTicketList(tickets) {
-    localStorage.tickets = JSON.stringify(tickets);
-}
-
-function findIndex(key, value, tickets = null) {
-    tickets = tickets || getTickets();
-
-    return tickets.findIndex(ticket => ticket[key] == value);
 }
 
 function chatworkMessage() {
@@ -352,53 +255,43 @@ function chatworkMessage() {
     var ticket = transformTicket();
 
     return (
-`${message}
-[info][title]Please review my PR[/title]${ticket.fullTitle}
-Github: ${ticket.gitUrl}
-Ticket: ${ticket.url}
-[/info]
-` );
-}
-
-function hasCurrentTicket() {
-    var index = findIndex('active', true);
-
-    return index >= 0;
+        message + '\n' +
+        '[info][title]Please review my PR[/title]' + ticket.fullTitle + '\n' +
+        'Github: ' + ticket.gitUrl + '\n' +
+        'Ticket: ' + ticket.url + '\n' +
+        '[/info]'
+    );
 }
 
 function gitTemplate() {
     return (
-`## Related Tickets
-- https://dev.framgia.com/issues/$ticketId
-
-## WHAT this PR do?
-- File changes:
-$fileChanges
-## HOW
-- 
-
-## WHY
-- 
-
-## Checklist
-- [x] Self review in local
-- [x] Check impacted areas
-- [x] My code follow the RULE code of project?
-- [ ] New and existing unit test pass locally with my changes?
-- [x] Fill information for Related Tickets? 
-- [x] Fill information for What?
-- [x] Fill information for How?
-- [x] Fill information for Why?
-
-## Notes Impacted Areas
-*(Impacted Areas in Application(List features, api, models or services that this PR will affect))
-*(List gem, library third party add new)*
-*(Checklist)*
-*(Other notes)*
-
-## Performance  (Optional)
-- [ ] Resolved n + 1 query
-- [ ] Time open page : 1000 ms
-- [ ] Generated SQL query (please show query detail below)
-` );
+        '## Related Tickets\n' +
+        '- https://dev.framgia.com/issues/$ticketId\n\n' +
+        '## WHAT this PR do?\n' +
+        '- File changes:\n' +
+        '$fileChanges\n' +
+        '## HOW\n' +
+        '-\n\n'  +
+        '## WHY\n' +
+        '-\n\n'  +
+        '## Checklist\n' +
+        '- [x] Self review in local\n' +
+        '- [x] Check impacted areas\n' +
+        '- [x] My code follow the RULE code of project?\n' +
+        '- [ ] New and existing unit test pass locally with my changes?\n' +
+        '- [x] Fill information for Related Tickets?\n' +
+        '- [x] Fill information for What?\n' +
+        '- [x] Fill information for How?\n' +
+        '- [x] Fill information for Why?\n\n' +
+        '## Notes Impacted Areas\n' +
+        '*(Impacted Areas in Application(List features,' +
+        'api, models or services that this PR will affect))\n' +
+        '*(List gem, library third party add new)*\n' +
+        '*(Checklist)*\n' +
+        '*(Other notes)*\n\n' +
+        '## Performance  (Optional)\n' +
+        '- [ ] Resolved n + 1 query\n' +
+        '- [ ] Time open page : 1000 ms\n' +
+        '- [ ] Generated SQL query (please show query detail below)\n'
+    );
 }
