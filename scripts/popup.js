@@ -14,16 +14,10 @@ $(document).on('click', '#git-fill-template', function () {
     chrome.tabs.getSelected(function (tab){
         chrome.tabs.sendMessage(tab.id, {
             type: 'git-filechanges'
-        }, function (response) {
-            var ticket = getTicket();
-            var tickets = getTickets();
-            var index = tickets.findIndex(ticketItem => {
-                return ticketItem.id == ticket.id;
-            });
-            ticket.fileChanges = response.fileChanges || ticket.fileChanges;
-            tickets.splice(index, 1, ticket);
-            localStorage.ticket = JSON.stringify(ticket);
-            localStorage.tickets = JSON.stringify(tickets);
+        }, function ({fileChanges}) {
+            if (fileChanges) {
+                updateTicket({fileChanges});
+            }
             syncGitTemplate();
             chrome.tabs.getSelected(function (tab){
                 var description = $('#git-description').val();
@@ -42,23 +36,12 @@ $(document).on('click', '#git-get-url', function () {
     chrome.tabs.getSelected(function (tab){
         chrome.tabs.sendMessage(tab.id, {
             type: 'git-get-url'
-        }, function (response) {
-            var ticket = getTicket();
+        }, function ({url}) {
+            if (!url) return;
 
-            if (ticket) {
-                var tickets = getTickets();
-                var tickets = getTickets();
-                var index = tickets.findIndex(ticketItem => {
-                    return ticketItem.id == ticket.id;
-                });
-
-                ticket.gitUrl = response.url || ticket.gitUrl;
-                tickets.splice(index, 1, ticket);
-                localStorage.ticket = JSON.stringify(ticket);
-                localStorage.tickets = JSON.stringify(tickets);
-                syncGitTemplate();
-                syncChatWorkMessage();
-            }
+            updateTicket({gitUrl: url});
+            syncGitTemplate();
+            syncChatWorkMessage();
         });
     });
 });
@@ -77,32 +60,20 @@ $(document).on('click', '#clear-all', function () {
 });
 
 $(document).on('click', '.btn-set-current', function () {
-    var id = $(this).attr('data-id');
-    var currentTicket = getTickets().find(ticket => {
-        return ticket.id == id;
-    });
+    var ticketId = $(this).attr('data-id');
 
-    if (currentTicket) {
-        localStorage.ticket = JSON.stringify(currentTicket);
-        syncCurrentTicket();
-        syncGitTemplate();
-        syncChatWorkMessage();
-    }
+    activeTicket(ticketId);
+    syncCurrentTicket();
+    syncGitTemplate();
+    syncChatWorkMessage();
 });
 
 $(document).on('click', '.btn-remove', function () {
-    var id = $(this).attr('data-id');
-    var tickets = getTickets();
-    var index = tickets.findIndex(ticket => {
-        return ticket.id == id;
-    });
+    var ticketId = $(this).attr('data-id');
 
-    if (index < 0) return;
-
-    tickets.splice(index, 1);
-    localStorage.tickets = JSON.stringify(tickets);
+    removeTicketFromList(ticketId);
     $(this).closest('.tk-item').remove();
-    $('#tk-content .tk-activity').toggleClass('d-none', !tickets.length);
+    $('#tk-content .tk-activity').toggleClass('d-none', !getTickets().length);
 });
 
 $(document).on('focus', '#git-content .form-control', function () {
@@ -110,9 +81,7 @@ $(document).on('focus', '#git-content .form-control', function () {
 });
 
 $(document).on('click', '.copy-on-click', function (event) {
-    var $this = $(this);
-    var text = $this.text();
-    copyText(text);
+    copyText($(this).text());
     copyTooltip(event.clientY, event.clientX);
 });
 
@@ -249,34 +218,44 @@ function syncGitTemplate() {
 }
 
 function transformTicket(ticket = null) {
-    var ticket = ticket || getTicket();
+    var ticket = ticket || getCurrentTicket();
+    var title = valueWithDefault(ticket, 'title');
+    var description = valueWithDefault(ticket, 'description');
 
     return {
+        title: title,
+        description: description,
+        fullTitle: title + ' ' + description,
         url: getTicketUrl(ticket),
-        id: ticket && ticket.id ? ticket.id : '',
-        title: ticket && ticket.title ? ticket.title : '',
-        description: ticket && ticket.description ? ticket.description : '',
-        gitUrl: ticket && ticket.gitUrl ? ticket.gitUrl : '',
-        fullTitle: ticket ? ticket.title + ' ' + ticket.description : '',
-        fileChanges: ticket && ticket.fileChanges ? ticket.fileChanges : '',
+        id: valueWithDefault(ticket, 'id'),
+        gitUrl: valueWithDefault(ticket, 'gitUrl'),
+        fileChanges: valueWithDefault(ticket, 'fileChanges'),
     }
 }
 
-function getTicketUrl(ticket = null) {
-    var ticket = ticket || getTicket() || {};
-    return ticket.id ? `https://dev.sun-asterisk.com/issues/${ticket.id}` : '';
+function getTicketUrl(ticket) {
+    var ticketId = valueWithDefault(ticket, 'id');
+
+    return ticketId ? `https://dev.sun-asterisk.com/issues/${ticketId}` : '';
 }
 
-function getTicket() {
-    return localStorage.ticket ? JSON.parse(localStorage.ticket) : null;
+function getCurrentTicket() {
+    var tickets = getTickets();
+    var index = findIndex('active', true, tickets);
+
+    return index >= 0 ? JSON.parse(tickets[index]) : null;
 }
 
 function getTickets() {
-    return localStorage.tickets ? JSON.parse(localStorage.tickets) : [];
+    if (!localStorage.tickets) {
+        localStorage.tickets = JSON.stringify([]);
+    }
+
+    return JSON.parse(localStorage.tickets);
 }
 
-function gitCommitTitle(title) {
-    return `git commit -m "${title}"`;
+function valueWithDefault(object, key) {
+    return object && object[key] ? object[key] : '';
 }
 
 function copyText(text) {
@@ -302,17 +281,70 @@ function chatworkMessageHtml() {
 }
 
 function copyTooltip(top, left) {
-    var $tooltip = $('<span class="copy-tooltip">Copied</span>');
     $('.copy-tooltip').remove();
-    $tooltip.css({top: top - 35, left: left - 30});
+
+    var $tooltip = $('<span class="copy-tooltip">Copied</span>').css({
+        top: top - 35,
+        left: left - 30
+    });
+
     $('body').append($tooltip);
-    
+
     setTimeout(function () {
         $tooltip.addClass('tooltip-fade-out');
         setTimeout(function () {
             $tooltip.remove();
         }, 500);
-    }, 200)
+    }, 200);
+}
+
+function removeTicketFromList(ticketId) {
+    var tickets = getTickets();
+    var index = findIndex('id', ticketId, tickets);
+
+    tickets.splice(index, 1);
+    updateTicketList(tickets);
+}
+
+function activeTicket(ticketId) {
+    var tickets = getTickets();
+    var indexActive = findIndex('active', true, tickets);
+    var indexUpdate = findIndex('id', ticketId, tickets);
+
+    if (indexUpdate >= 0) {
+        tickets[indexUpdate].active = true;
+
+        if (indexActive >= 0) {
+            tickets[indexActive].active = false;
+        }
+    }
+    
+    updateTicketList(tickets);
+}
+
+function updateTicket(ticketId = null, data = null) {
+    var tickets = getTickets();
+
+    if (!data) {
+        var index = findIndex('active', true, tickets);
+        data = ticketId;
+    } else {
+        var index = findIndex('id', ticketId, tickets);
+        data = data || {};
+    }
+
+    tickets[index] = {...tickets[index], ...data};
+    updateTicketList(tickets);
+}
+
+function updateTicketList(tickets) {
+    localStorage.tickets = JSON.stringify(tickets);
+}
+
+function findIndex(key, value, tickets = null) {
+    tickets = tickets || getTickets();
+
+    return tickets.findIndex(ticket => ticket[key] == value);
 }
 
 function chatworkMessage() {
@@ -329,7 +361,9 @@ Ticket: ${ticket.url}
 }
 
 function hasCurrentTicket() {
-    return !!localStorage.ticket;
+    var index = findIndex('active', true);
+
+    return index >= 0;
 }
 
 function gitTemplate() {
