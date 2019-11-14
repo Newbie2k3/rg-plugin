@@ -202,6 +202,25 @@ body {
     color: #424242;
 }
 
+.tk-info .left-side {
+    width: 45%;
+    float: left;
+}
+
+.tk-info .right-side {
+    width: 45%;
+    float: right;
+}
+
+.tk-row .field-value {
+    float: right;
+    font-weight: 600;
+}
+
+.tk-row .field-title {
+    color: #414047ab;
+}
+
 .tk-activity {
     font-size: 14px;
     font-weight: 600;

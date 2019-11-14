@@ -2,14 +2,21 @@ function transformTicket(ticket = null) {
     var ticket = ticket || getCurrentTicket();
     var title = valueWithDefault(ticket, 'title');
     var description = valueWithDefault(ticket, 'description');
+    var defaultObject = new Object;
+
+    [
+        'id', 'status', 'done', 'estimatedTime', 'spentTime', 'assignee',
+        'targetVersion', 'startDate', 'dueDate', 'gitUrl','fileChanges'
+    ]
+    .forEach(field => {
+        defaultObject[field] = valueWithDefault(ticket, field);
+    });
 
     return {
+        ...defaultObject,
         title: title,
         description: description,
         url: getTicketUrl(ticket),
-        id: valueWithDefault(ticket, 'id'),
-        gitUrl: valueWithDefault(ticket, 'gitUrl'),
-        fileChanges: valueWithDefault(ticket, 'fileChanges'),
         fullTitle: (title && description) ? title + ' ' + description : '',
     }
 }
@@ -54,19 +61,19 @@ function activeTicket(ticketId) {
     updateTicketList(tickets);
 }
 
-function updateTicket(ticketId = null, data = null) {
+function updateTicket(data) {
     var tickets = getTickets();
 
-    if (!data) {
-        var index = findIndex('active', true, tickets);
-        data = ticketId;
+    if (data.id) {
+        var index = findIndex('id', data.id, tickets);
     } else {
-        var index = findIndex('id', ticketId, tickets);
-        data = data || {};
+        var index = findIndex('active', true, tickets);
     }
 
-    tickets[index] = {...tickets[index], ...data};
-    updateTicketList(tickets);
+    if (index >= 0) {
+        tickets[index] = {...tickets[index], ...data};
+        updateTicketList(tickets);
+    }
 }
 
 function updateTicketList(tickets) {

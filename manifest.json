@@ -28,7 +28,8 @@
                 "*://dev.sun-asterisk.com/redmine/issues*"
             ],
             "js": [
-                "scripts/content.js"
+                "scripts/content.js",
+                "scripts/lib/bootstrap.min.js"
             ],
             "css": [
                 "styles/font.css",

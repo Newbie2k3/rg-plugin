@@ -90,7 +90,7 @@ $(document).on('focus', '#git-content .form-control', function () {
 });
 
 $(document).on('click', '.copy-on-click', function (event) {
-    copyText($(this).text());
+    copyText($(this).text().trim());
     copyTooltip(event.clientY, event.clientX);
 });
 
@@ -185,6 +185,42 @@ function syncCurrentTicket() {
                 <p class="tk-description copy-on-click">
                     ${ticket.description}
                 </p>
+                <div class="left-side">
+                    <p class="tk-row">
+                        <span class="field-title">Status</span>
+                        <span class="field-value">${ticket.status}</span>
+                    </p>
+                    <p class="tk-row">
+                        <span class="field-title">Assignee</span>
+                        <span class="field-value">${ticket.assignee}</span>
+                    </p>
+                    <p class="tk-row">
+                        <span class="field-title">Estimated time</span>
+                        <span class="field-value">${ticket.estimatedTime}</span>
+                    </p>
+                    <p class="tk-row">
+                        <span class="field-title">Spent time</span>
+                        <span class="field-value">${ticket.spentTime}</span>
+                    </p>
+                </div>
+                <div class="right-side">
+                    <p class="tk-row">
+                        <span class="field-title">Start date</span>
+                        <span class="field-value">${ticket.startDate}</span>
+                    </p>
+                    <p class="tk-row">
+                        <span class="field-title">Start date</span>
+                        <span class="field-value">${ticket.dueDate}</span>
+                    </p>
+                    <p class="tk-row">
+                        <span class="field-title">Target version</span>
+                        <span class="field-value">${ticket.targetVersion}</span>
+                    </p>
+                    <p class="tk-row">
+                        <span class="field-title">Progress</span>
+                        <span class="field-value">${ticket.done}</span>
+                    </p>
+                </div>
                 <a href="${ticket.url}" target="_blank">${ticket.url}</a>
             </div>
         `);

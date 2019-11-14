@@ -1,3 +1,16 @@
+.actions {
+    display: flex;
+}
+
+.actions .button-group {
+    display: inline-flex;
+    margin-left: 15px;
+}
+
+.button-group .btn {
+    height: fit-content;
+    margin: auto 5px; 
+}
 
 .btn {
     display: inline-block;
@@ -23,9 +36,14 @@
 }
 
 .btn {
+    font-family: 'Quicksand', sans-serif;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+}
+
+.btn:hover {
+    text-decoration: none;
 }
 
 .btn-success {
@@ -40,22 +58,34 @@
     border-color: #1c7430;
 }
 
-.btn:hover {
-    text-decoration: none;
-}
-
 .btn-success:hover {
     color: #fff;
     background-color: #218838;
     border-color: #1e7e34;
 }
 
-.btn-success:not(:disabled):not(.disabled):active:focus {
+.btn-success:focus {
     box-shadow: 0 0 0 0.2rem rgba(72,180,97,.5);
 }
 
-.btn-set-current {
-    font-family: 'Quicksand', sans-serif;
-    margin-left: 20px;
-    font-weight: 700;
+.btn-primary {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:not(:disabled):not(.disabled):active:focus {
+    color: #fff;
+    background-color: #0062cc;
+    border-color: #005cbf;
+}
+
+.btn-primary:hover {
+    color: #fff;
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(38,143,255,.5);
 }

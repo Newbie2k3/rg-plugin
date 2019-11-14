@@ -1,5 +1,6 @@
 window.onload = function () {
     sendMessageCurrentHost();
+    syncTicketData();
 
     if (isOnGitHub()) {
         registerGithubPage();
@@ -36,22 +37,48 @@ function registerGithubPage() {
 }
 
 function registerRedminePage() {
-    var id = window.location.pathname.split('/').pop();
-    var content = document.querySelector('#content h2');
-    var title = content.textContent;
-    var description = document.querySelector('.subject h3').textContent;
-    var gitTemplateBtn = document.createElement('button');
+    var data = getDataFromCurrentPage();
+    var $actionContainer = $('<div class="actions"></div>');
+    var $title = $('#content h2');
+    var $buttons = $(`
+        <div class="button-group">
+            <button class="btn btn-primary btn-get-data">
+                Get Data
+            </button>
+            <button class="btn btn-success btn-set-current">
+                Set Current
+            </button>
+        </div>
+    `);
     
-    gitTemplateBtn.textContent = 'Set Current';
-    gitTemplateBtn.classList.add('btn', 'btn-success', 'btn-set-current');
-    content.appendChild(gitTemplateBtn);
+    $actionContainer.append($title.clone());
+    $actionContainer.append($buttons);
+    $title.replaceWith($actionContainer);
 
-    gitTemplateBtn.addEventListener('click', function() {
+    $(document).on('click', '.btn-get-data', function () {
         chrome.extension.sendMessage({
-            type: 'tk-content', 
-            data: {id, title, description}
+            type: 'get-data-tk', 
+            data: data
         });
     });
+
+    $(document).on('click', '.btn-set-current', function() {
+        chrome.extension.sendMessage({
+            type: 'set-current-tk', 
+            data: data
+        });
+    });
+}
+
+function syncTicketData() {
+    var data = getDataFromCurrentPage();
+
+    if (data.id) {
+        chrome.extension.sendMessage({
+            type: 'sync-tk',
+            data: data
+        });
+    }
 }
 
 function sendMessageCurrentHost() {
@@ -61,6 +88,38 @@ function sendMessageCurrentHost() {
             host: window.location.origin
         }
     });
+}
+
+function getDataFromCurrentPage() {
+    var id = getTicketId();
+    var title = $('#content h2').text();
+    var description = $('.subject h3').text();
+    var status = $('.status .value').text();
+    var done = $('.progress .percent').text();
+    var estimatedTime = $('.estimated-hours .value').text();
+    var spentTime = $('.spent-time .value').text();
+    var assignee = $('.assigned-to .value').text();
+    var targetVersion = $('.fixed-version .value').text();
+    var startDate = $('.start-date .value').text();
+    var dueDate = $('.due-date .value').text()
+
+    return {
+        id,
+        title,
+        description,
+        status,
+        done,
+        estimatedTime,
+        spentTime,
+        assignee,
+        targetVersion,
+        startDate,
+        dueDate
+    };
+}
+
+function getTicketId() {
+    return window.location.pathname.split('/').pop();
 }
 
 function isOnGitHub() {
