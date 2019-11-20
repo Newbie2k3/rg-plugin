@@ -1,5 +1,5 @@
 {
-    "name": "RG Extension",
+    "name": "RG Hehe",
     "version": "0.0.1",
     "manifest_version": 2,
     "description" : "Extension for Github and Redmine",
@@ -12,7 +12,7 @@
             "19": "images/icon.png",
             "38": "images/icon.png"
         },
-        "default_title": "RG Extension",
+        "default_title": "RG Hehe",
         "default_popup": "popup.html"
     },
     "background": {

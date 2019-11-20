@@ -1,5 +1,4 @@
 window.onload = function () {
-    sendMessageCurrentHost();
     syncTicketData();
 
     if (isOnGitHub()) {
@@ -9,10 +8,6 @@ window.onload = function () {
     if (isOnRedmine()) {
         registerRedminePage();
     }
-}
-
-window.onfocus = function () {
-    sendMessageCurrentHost();
 }
 
 function registerGithubPage() {
@@ -79,15 +74,6 @@ function syncTicketData() {
             data: data
         });
     }
-}
-
-function sendMessageCurrentHost() {
-    chrome.extension.sendMessage({
-        type: 'active-host',
-        data: {
-            host: window.location.origin
-        }
-    });
 }
 
 function getDataFromCurrentPage() {

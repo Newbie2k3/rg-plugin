@@ -111,10 +111,10 @@ function copyText(text) {
     document.removeEventListener('copy', handleCopy);
 }
 
-function copyTooltip(top, left) {
+function copyTooltip(top, left, message) {
     $('.copy-tooltip').remove();
-
-    var $tooltip = $('<span class="copy-tooltip">Copied</span>').css({
+    message = message || 'Copied';
+    var $tooltip = $(`<span class="copy-tooltip">${message}</span>`).css({
         top: top - 35,
         left: left - 30
     });

@@ -18,8 +18,6 @@ chrome.extension.onMessage.addListener(
             case 'sync-tk':
                 updateTicket(request.data);
                 break;
-            case 'active-host':
-                setCurrentHost(request.data.host);
         }
 });
 
@@ -41,14 +39,14 @@ function setDataTicket(data) {
     var tickets = getTickets();
     var index = findIndex('id', data.id, tickets);
 
+    if (!tickets.length) {
+        data.active = true;
+    }
+
     if (index < 0) {
         tickets.push(data);
         updateTicketList(tickets);
     } else {
         updateTicket(data);
     }
-}
-
-function setCurrentHost(host) {
-    localStorage.currentHost = host;
 }

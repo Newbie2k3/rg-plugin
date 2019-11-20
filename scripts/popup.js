@@ -94,6 +94,17 @@ $(document).on('click', '.copy-on-click', function (event) {
     copyTooltip(event.clientY, event.clientX);
 });
 
+$(document).on('click', '.copy-text', function (event) {
+    copyText($(this).data('text').trim());
+    copyTooltip(event.clientY, event.clientX);
+});
+
+$(document).on('click', '#tk-current .tk-title', function (event) {
+    var text = this.innerText.toLowerCase().replace(/ \#/g, '-');
+    copyText(text);
+    copyTooltip(event.clientY, event.clientX, `Copied "${text}"`);
+});
+
 $(document).on('click', '#tk-tab', function () {
     $('#page-title').html('Redmine');
     localStorage.currentHost = 'dev.sun-asterisk.com';
@@ -154,8 +165,18 @@ function syncChatWorkMessage() {
             <div class="message-info">
                 <p class="info-title">Please review my PR</p>
                 <p>${ticket.fullTitle}</p>
-                <p>GitHub: <a href="${ticket.gitUrl}">${ticket.gitUrl}</a></p>
-                <p>Ticket: <a href="${ticket.url}">${ticket.url}</a>
+                <p>
+                    GitHub:
+                    <a href="${ticket.gitUrl}" target="_blank">
+                        ${ticket.gitUrl}
+                    </a>
+                </p>
+                <p>
+                    Ticket:
+                    <a href="${ticket.url}" target="_blank">
+                        ${ticket.url}
+                    </a>
+                </p>
             </div>
         `);
     } else {
@@ -180,20 +201,34 @@ function syncCurrentTicket() {
             <div class="tk-mark">
                 <i class="material-icons">star_border</i>
             </div>
-            <p class="tk-title">${ticket.title}</p>
-            <div class="tk-info">
+            <div class="tk-overview">
+                <p class="tk-title">${ticket.title}</p>
                 <p class="tk-description copy-on-click">
                     ${ticket.description}
                 </p>
+            </div>
+            <div class="tk-info">
                 <div class="left-side">
                     <p class="tk-row">
                         <span class="field-title">Status</span>
                         <span class="field-value">${ticket.status}</span>
                     </p>
-                    <p class="tk-row">
-                        <span class="field-title">Assignee</span>
-                        <span class="field-value">${ticket.assignee}</span>
-                    </p>
+                    <div class="tk-row tk-progress">
+                        <span class="field-title">Progress</span>
+                        <span class="field-value">
+                            <div class="progress">
+                                <div
+                                    class="progress-bar bg-success"
+                                    role="progressbar"
+                                    style="width: ${ticket.done}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                >
+                                    ${ticket.done == '0%' ? '' : ticket.done}
+                                </div>
+                            </div>
+                        </span>
+                    </div>
                     <p class="tk-row">
                         <span class="field-title">Estimated time</span>
                         <span class="field-value">${ticket.estimatedTime}</span>
@@ -205,23 +240,33 @@ function syncCurrentTicket() {
                 </div>
                 <div class="right-side">
                     <p class="tk-row">
+                        <span class="field-title">Assignee</span>
+                        <span class="field-value">${ticket.assignee}</span>
+                    </p>
+                    <p class="tk-row">
                         <span class="field-title">Start date</span>
                         <span class="field-value">${ticket.startDate}</span>
                     </p>
                     <p class="tk-row">
-                        <span class="field-title">Start date</span>
+                        <span class="field-title">Due date</span>
                         <span class="field-value">${ticket.dueDate}</span>
                     </p>
                     <p class="tk-row">
                         <span class="field-title">Target version</span>
                         <span class="field-value">${ticket.targetVersion}</span>
                     </p>
-                    <p class="tk-row">
-                        <span class="field-title">Progress</span>
-                        <span class="field-value">${ticket.done}</span>
-                    </p>
                 </div>
-                <a href="${ticket.url}" target="_blank">${ticket.url}</a>
+            </div>
+            <div class="tk-actions">
+                <a href="${ticket.url}" target="_blank" class="btn btn-success">
+                    <i class="material-icons">link</i>
+                </a>
+                <a href="${ticket.gitUrl}" target="_blank" class="btn btn-primary">
+                    <i class="material-icons">device_hub</i>
+                </a>
+                <button data-id="${ticket.id}" class="btn btn-danger btn-remove">
+                    <i class="material-icons">clear</i>
+                </button>
             </div>
         `);
 
@@ -242,6 +287,9 @@ function syncTicketList() {
                 <div class="tk-item-info">
                     <p class="copy-on-click">${ticket.description}</p>
                     <a href="${ticket.url}" target="_blank">${ticket.url}</a>
+                    <span data-text="${ticket.url}" class="copy-text">
+                        <i class="material-icons-outlined">file_copy</i>
+                    </span>
                 </div>
                 <div class="tk-item-action">
                     <button data-id="${ticket.id}" class="btn btn-set-current">
