@@ -1,13 +1,56 @@
 window.onload = function () {
-    syncTicketData();
-
     if (isOnGitHub()) {
         registerGithubPage();
     }
     
     if (isOnRedmine()) {
+        syncTicketData();
         registerRedminePage();
     }
+}
+
+if (isOnChatwork()) {
+    registerChatworkPage();
+}
+
+function registerChatworkPage() {
+    injectJsFile();
+    var interval = setInterval(function () {
+        var $romTitle = $('#_roomTitle');
+        if ($romTitle.length) {
+            $(`<ul id="message-setting">
+                    <li>
+                        <input id="toall" class="rg-ckbox" type="checkbox" name="toall" value="true">
+                        <label for="toall">Toall</label>
+                    </li>
+                    <li>
+                        <input id="TOALL" class="rg-ckbox" type="checkbox" name="TOALL" value="true">
+                        <label for="TOALL">TO ALL >>></label>
+                    </li>
+                    <li>
+                        <input id="myMessage" class="rg-ckbox" type="checkbox" name="myMessage" value="true">
+                        <label for="myMessage">My Chat</label>
+                    </li>
+                </ul>
+            `).insertAfter($romTitle);
+            restoreMessageSettings();
+            clearInterval(interval);
+        }
+    }, 100);
+}
+
+function restoreMessageSettings() {
+    var settings = JSON.parse(localStorage.rgMessageSettings || '{}');
+
+    $('[name="toall"]').prop('checked', settings.toall);
+    $('[name="TOALL"]').prop('checked', settings.TOALL);
+    $('[name="myMessage"]').prop('checked', settings.myMessage);
+}
+
+function injectJsFile() {
+    let script = document.createElement("script");
+    script.src = chrome.extension.getURL('scripts/resources/chatwork.js');
+    (document.documentElement).appendChild(script);
 }
 
 function registerGithubPage() {
@@ -43,6 +86,9 @@ function registerRedminePage() {
             <button class="btn btn-success btn-set-current">
                 Set Current
             </button>
+            <button class="btn btn-danger btn-remove">
+                Remove
+            </button>
         </div>
     `);
     
@@ -61,6 +107,13 @@ function registerRedminePage() {
         chrome.extension.sendMessage({
             type: 'set-current-tk', 
             data: data
+        });
+    });
+
+    $(document).on('click', '.btn-remove', function() {
+        chrome.extension.sendMessage({
+            type: 'remove-tk', 
+            data: {id: data.id}
         });
     });
 }
@@ -114,6 +167,10 @@ function isOnGitHub() {
 
 function isOnRedmine() {
     return window.location.origin.match('dev.sun-asterisk');
+}
+
+function isOnChatwork() {
+    return window.location.origin.match('chatwork');
 }
 
 function getFileChanges() {

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="./styles/lib/bootstrap.min.css">
+        <title>RGC</title>
+    </head>
+    <style>
+        #content {
+            background: #c9c9c9;
+            width: 650px;
+            min-height: 200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        #content img {
+            width: 12px;
+        }
+    </style>
+    <body>
+        <div contenteditable="true" id="content">
+            Hsdfsdf sdf sdfsd sdflkdsfsdf
+            <img src="https://twemoji.maxcdn.com/v/latest/72x72/2764.png" />
+
+            dsfsdfsdfsdf sdflkdsfsdf
+
+            sfdsf
+        </div>
+        <button id="btn" class="btn btn-success">Click</button>
+        <script src="./scripts/lib/bootstrap.min.js"></script>
+        <script>
+            var content = document.getElementById('content');
+            var r = null;
+            $(document).on('keyup keydown focus mouseup', '#content', function (event) {
+                selection = saveSelection();
+                localStorage.content = getTextContent()
+            });
+
+            $(document).on('click', '#btn', function () {
+                insertContent('<img src="https://twemoji.maxcdn.com/v/latest/72x72/2764.png" />');;
+            });
+
+            function insertContent(html) {
+                restoreSelection();
+                pasteHtmlAtCaret(html);
+                selection = saveSelection();
+            }
+
+            if (window.getSelection && document.createRange) {
+                saveSelection = function() {
+                    var sel = window.getSelection && window.getSelection();
+                    if (sel && sel.rangeCount > 0) {
+                        return sel.getRangeAt(0);
+                    }
+                };
+
+                restoreSelection = function() {
+                    var range = document.createRange();
+                    range.setStart(selection.startContainer, selection.startOffset);
+                    range.setEnd(selection.endContainer, selection.endOffset)
+
+                    selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            } else if (document.selection && document.body.createTextRange) {
+                saveSelection = function() {
+                    return document.selection.createRange();
+                };
+
+                restoreSelection = function() {
+                    var textRange = document.body.createTextRange();
+                    textRange.moveToElementText(content);
+                    textRange.setStart(selection.startContanier, selection.startOffset);
+                    textRange.setEnd(selection.endContainer, selection.endOffset);
+                    textRange.select();
+                };
+            }
+
+            function pasteHtmlAtCaret(html) {
+                var sel, range;
+                if (window.getSelection) {
+                    sel = window.getSelection();
+                    if (sel.getRangeAt && sel.rangeCount) {
+                        range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        var el = document.createElement("div");
+                        el.innerHTML = html;
+                        var frag = document.createDocumentFragment(), node, lastNode;
+                        while ( (node = el.firstChild) ) {
+                            lastNode = frag.appendChild(node);
+                        }
+                        range.insertNode(frag);
+                        if (lastNode) {
+                            range = range.cloneRange();
+                            range.setStartAfter(lastNode);
+                            range.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+                } else if (document.selection && document.selection.type != "Control") {
+                    document.selection.createRange().pasteHTML(html);
+                }
+            }
+            function getTextContent() {
+                var cloneContent = content.cloneNode(true);
+                cloneContent.childNodes.forEach(node => {
+                    switch (node.nodeName) {
+                        case 'DIV':
+                            node.parentNode.replaceChild(
+                                document.createTextNode('\n' + node.innerText),
+                                node
+                            );
+                            break;
+                        case 'BR':
+                            node.parentNode.replaceChild(
+                                document.createTextNode('\n'),
+                                node
+                            );
+                            break;
+                        case 'IMG':
+                            node.parentNode.replaceChild(
+                                document.createTextNode(node.alt),
+                                node
+                            );
+                            break;
+                    }
+                    
+                });
+                return cloneContent.innerText.replace(/&nbsp;/g, ' ');
+            }
+
+            function convertTextToHtml() {
+                var text = localStorage.content;
+                var lines = text.split(/[\r\n]/g);
+                var divContent = document.createElement('div');
+
+                lines.forEach(line => {
+                    if (line) {
+                        divContent.appendChild(
+                            document.createTextNode(line)
+                        );
+                        divContent.appendChild(
+                            document.createElement('br')
+                        );
+                    } else {
+                        divContent.appendChild(
+                            document.createElement('br')
+                        );
+                    }
+                });
+
+                content.innerHTML = divContent.innerHTML.replace(/ /g, '&nbsp;');
+            }
+        </script>
+    </body>
+</html>

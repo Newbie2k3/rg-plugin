@@ -78,10 +78,6 @@ $(document).on('click', '.btn-remove', function () {
 
     removeTicketFromList(ticketId, tickets);
     
-    if (tickets.length) {
-        activeTicket(tickets[0].id);
-    }
-    
     syncAll();
 });
 

@@ -3,6 +3,7 @@ import {
     getTickets,
     activeTicket,
     updateTicketList,
+    removeTicketFromList,
     updateTicket
 } from './lib/helpers.js'
 
@@ -14,6 +15,9 @@ chrome.extension.onMessage.addListener(
                 break;
             case 'get-data-tk':
                 setDataTicket(request.data);
+                break;
+            case 'remove-tk':
+                removeTicket(request.data);
                 break;
             case 'sync-tk':
                 updateTicket(request.data);
@@ -49,4 +53,8 @@ function setDataTicket(data) {
     } else {
         updateTicket(data);
     }
+}
+
+function removeTicket(data) {
+    removeTicketFromList(data.id);
 }
