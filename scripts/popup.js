@@ -78,10 +78,6 @@ $(document).on('click', '.btn-remove', function () {
 
     removeTicketFromList(ticketId, tickets);
     
-    if (tickets.length) {
-        activeTicket(tickets[0].id);
-    }
-    
     syncAll();
 });
 
@@ -354,9 +350,9 @@ function gitTemplate() {
         '## WHAT this PR do?\n' +
         '- File changes:\n' +
         '$fileChanges\n' +
-        '## HOW\n' +
-        '-\n\n'  +
         '## WHY\n' +
+        '-\n\n'  +
+        '## HOW\n' +
         '-\n\n'  +
         '## Checklist\n' +
         '- [x] Self review in local\n' +

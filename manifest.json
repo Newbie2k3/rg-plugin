@@ -22,10 +22,10 @@
     "content_scripts": [
         {
             "matches": [
-                "*://github.com/*",
-                "*://chatwork.com/*",
-                "*://dev.sun-asterisk.com/issues/*",
-                "*://dev.sun-asterisk.com/redmine/issues*"
+                "https://github.com/*",
+                "https://www.chatwork.com/*",
+                "https://dev.sun-asterisk.com/issues/*",
+                "https://dev.sun-asterisk.com/redmine/issues*"
             ],
             "js": [
                 "scripts/content.js",
@@ -37,6 +37,9 @@
             ],
             "run_at": "document_idle"
         }
+    ],
+    "web_accessible_resources": [
+        "scripts/resources/chatwork.js"
     ],
     "permissions": [
         "clipboardWrite",

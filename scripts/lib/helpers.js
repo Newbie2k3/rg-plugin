@@ -39,9 +39,15 @@ function removeTicketFromList(ticketId, tickets = null) {
     tickets = tickets || getTickets();
     var index = findIndex('id', ticketId, tickets);
 
-    if (index >= 0) {
-        tickets.splice(index, 1);
-        updateTicketList(tickets);
+    if (index < 0) {
+        return false;
+    }
+
+    tickets.splice(index, 1);
+    updateTicketList(tickets);
+
+    if (tickets.length && !hasCurrentTicket()) {
+        activeTicket(tickets[0].id);
     }
 }
 
