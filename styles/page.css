@@ -413,8 +413,11 @@ a[href = ""] {
     font-size: 14px;
 }
 
-#git-template {
-    height: 375px;
+#git-what,
+#git-why,
+#git-how,
+#git-impacted {
+    height: 80px;
 }
 
 #git-url {

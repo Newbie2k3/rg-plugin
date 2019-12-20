@@ -7,6 +7,7 @@ import {
     activeTicket,
     updateTicket,
     hasCurrentTicket,
+    getCurrentTicket,
 } from './lib/helpers.js';
 
 
@@ -20,6 +21,14 @@ $(document).on('keydown keyup', '#cw-message', function () {
     syncChatWorkMessage();
 });
 
+['what', 'why', 'how', 'impacted'].forEach(field => {
+    $(document).on('keydown keyup', `#git-${field}`, function () {
+        var value = $(this).val();
+        updateTicket({[field]: value});
+        syncGitTemplate();
+    });
+});
+
 $(document).on('click', '#git-fill-template', function () {
     chrome.tabs.getSelected(function (tab){
         chrome.tabs.sendMessage(tab.id, {
@@ -30,13 +39,17 @@ $(document).on('click', '#git-fill-template', function () {
                 syncGitTemplate();
             }
             chrome.tabs.getSelected(function (tab){
-                var description = $('#git-description').val();
-                var template = $('#git-template').val();
+                var ticket = getCurrentTicket();
 
-                chrome.tabs.sendMessage(tab.id, {
-                    type: 'git-fill-template',
-                    data: {description, template}
-                });
+                if (ticket) {
+                    chrome.tabs.sendMessage(tab.id, {
+                        type: 'git-fill-template',
+                        data: {
+                            description: ticket.fullTitle,
+                            template: ticket.template
+                        }
+                    });
+                }
             });
         });
     });
@@ -81,7 +94,7 @@ $(document).on('click', '.btn-remove', function () {
     syncAll();
 });
 
-$(document).on('focus', '#git-content .form-control', function () {
+$(document).on('focus', '#git-description, #git-url', function () {
     $(this).select();
 });
 
@@ -273,7 +286,9 @@ function syncCurrentTicket() {
 }
 
 function syncTicketList() {
-    var tickets = getTickets().map(ticket => transformTicket(ticket));
+    var tickets = getTickets().map(
+        ticket => transformTicket(ticket)
+    ).reverse();
 
     $('#tk-list').empty();
 
@@ -312,12 +327,18 @@ function syncGitTemplate() {
     var template = gitTemplate();
     var ticket = transformTicket();
 
-    template = template.replace('$ticketId', ticket.id);
-    template = template.replace('$fileChanges', ticket.fileChanges);
+    ['id', 'what', 'why', 'how', 'impacted', 'fileChanges'].forEach(field => {
+        template = template.replace(`$${field}`, ticket[field]);
+    });
 
-    $('#git-template').val(template);
     $('#git-description').val(ticket.fullTitle);
-    $('#git-url').val(ticket.gitUrl)
+    $('#git-what').val(ticket.what);
+    $('#git-why').val(ticket.why);
+    $('#git-how').val(ticket.how);
+    $('#git-impacted').val(ticket.impacted);
+    $('#git-url').val(ticket.gitUrl);
+
+    updateTicket({template});
 }
 
 function chatworkMessageHtml() {
@@ -346,14 +367,15 @@ function chatworkMessage() {
 function gitTemplate() {
     return (
         '## Related Tickets\n' +
-        '- https://dev.framgia.com/issues/$ticketId\n\n' +
+        '- https://dev.framgia.com/issues/$id\n\n' +
         '## WHAT this PR do?\n' +
+        '$what\n' +
         '- File changes:\n' +
         '$fileChanges\n' +
         '## WHY\n' +
-        '-\n\n'  +
+        '$why\n\n'  +
         '## HOW\n' +
-        '-\n\n'  +
+        '$how\n\n'  +
         '## Checklist\n' +
         '- [x] Self review in local\n' +
         '- [x] Check impacted areas\n' +
@@ -364,6 +386,7 @@ function gitTemplate() {
         '- [x] Fill information for How?\n' +
         '- [x] Fill information for Why?\n\n' +
         '## Notes Impacted Areas\n' +
+        '$impacted\n' +
         '*(Impacted Areas in Application(List features,' +
         'api, models or services that this PR will affect))\n' +
         '*(List gem, library third party add new)*\n' +

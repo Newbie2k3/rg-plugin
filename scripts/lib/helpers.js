@@ -5,8 +5,9 @@ function transformTicket(ticket = null) {
     var defaultObject = new Object;
 
     [
-        'id', 'status', 'done', 'estimatedTime', 'spentTime', 'assignee',
-        'targetVersion', 'startDate', 'dueDate', 'gitUrl','fileChanges'
+        'id', 'what', 'why', 'how', 'impacted', 'template', 'status',
+        'done', 'estimatedTime', 'spentTime', 'assignee', 'targetVersion',
+        'startDate', 'dueDate', 'gitUrl','fileChanges'
     ]
     .forEach(field => {
         defaultObject[field] = valueWithDefault(ticket, field);
@@ -23,8 +24,9 @@ function transformTicket(ticket = null) {
 
 function getCurrentTicket() {
     var tickets = getTickets();
+    var currentTicket = tickets.find(ticket => ticket.active);
     
-    return tickets.find(ticket => ticket.active);
+    return currentTicket ? transformTicket(currentTicket) : null;
 }
 
 function getTickets() {
