@@ -20,10 +20,33 @@ chrome.extension.onMessage.addListener(
                 removeTicket(request.data);
                 break;
             case 'sync-tk':
+                
                 updateTicket(request.data);
+                break;
+            case 'sync-git-url':
+                updateGitUrl(request.data);
                 break;
         }
 });
+
+function updateGitUrl(data) {
+    var tickets = getTickets();
+    var index = tickets.findIndex(ticket => {
+        let regex = new RegExp(`^${ticket.title}`);
+
+        return regex.test(data.title);
+    });
+
+    if (index >= 0) {
+        let ticket = tickets[index];
+
+        if (ticket.gitUrl) {
+            return false;
+        }
+
+        updateTicket({id: ticket.id, gitUrl: data.gitUrl})
+    }
+}
 
 function setCurrentTicket(data) {
     var tickets = getTickets();

@@ -1,5 +1,6 @@
 window.onload = function () {
     if (isOnGitHub()) {
+        syncGitUrl();
         registerGithubPage();
     }
     
@@ -115,6 +116,24 @@ function registerRedminePage() {
             type: 'remove-tk', 
             data: {id: data.id}
         });
+    });
+}
+
+function syncGitUrl() {
+    let title = document.querySelector('.js-issue-title');
+
+    if (!title) {
+        return false;
+    }
+
+    title = title.innerText.trim();
+    
+    chrome.extension.sendMessage({
+        type: 'sync-git-url',
+        data: {
+            gitUrl: window.location.href,
+            title: title
+        }
     });
 }
 

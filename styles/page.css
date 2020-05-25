@@ -327,6 +327,14 @@ a[href = ""] {
     border-radius: 5px;
 }
 
+.tk-item.active .btn-set-current {
+    background-color: #1e7e34;
+}
+
+.tk-item.active .btn-set-current i {
+    color: #fff;
+}
+
 .tk-item .tk-item-action {
     display: block;
     min-width: 30px;
@@ -413,10 +421,7 @@ a[href = ""] {
     font-size: 14px;
 }
 
-#git-what,
-#git-why,
-#git-how,
-#git-impacted {
+#git-content textarea {
     height: 80px;
 }
 

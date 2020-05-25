@@ -21,8 +21,8 @@ $(document).on('keydown keyup', '#cw-message', function () {
     syncChatWorkMessage();
 });
 
-['what', 'why', 'how', 'impacted'].forEach(field => {
-    $(document).on('keydown keyup', `#git-${field}`, function () {
+['what', 'libaries', 'impacted', 'note'].forEach(field => {
+    $(document).on('keydown keyup change', `#git-${field}`, function () {
         var value = $(this).val();
         updateTicket({[field]: value});
         syncGitTemplate();
@@ -212,7 +212,10 @@ function syncCurrentTicket() {
             </div>
             <div class="tk-overview">
                 <p class="tk-title">${ticket.title}</p>
-                <p class="tk-description copy-on-click">
+                <p
+                    data-text="${ticket.fullTitle}"
+                    class="tk-description copy-text"
+                >
                     ${ticket.description}
                 </p>
             </div>
@@ -293,8 +296,9 @@ function syncTicketList() {
     $('#tk-list').empty();
 
     tickets.forEach(ticket => {
+        var activeClass = ticket.active ? 'active' : '';
         var $ticketHtml = $(`
-            <div class="tk-item">
+            <div class="tk-item ${activeClass}">
                 <div class="tk-item-info">
                     <p class="copy-on-click">${ticket.description}</p>
                     <a href="${ticket.url}" target="_blank">${ticket.url}</a>
@@ -324,21 +328,34 @@ function syncTicketList() {
 }
 
 function syncGitTemplate() {
-    var template = gitTemplate();
     var ticket = transformTicket();
-
-    ['id', 'what', 'why', 'how', 'impacted', 'fileChanges'].forEach(field => {
-        template = template.replace(`$${field}`, ticket[field]);
-    });
+    var what = convertGitTemplateContent(ticket.what, '- [x]');
+    var libaries = convertGitTemplateContent(ticket.libaries);
+    var impacted = convertGitTemplateContent(ticket.impacted);
+    var note = convertGitTemplateContent(ticket.note);
+    var template = gitTemplate(ticket.id, what, libaries, impacted, note);
 
     $('#git-description').val(ticket.fullTitle);
     $('#git-what').val(ticket.what);
-    $('#git-why').val(ticket.why);
-    $('#git-how').val(ticket.how);
+    $('#git-libaries').val(ticket.libaries);
     $('#git-impacted').val(ticket.impacted);
+    $('#git-note').val(ticket.note);
     $('#git-url').val(ticket.gitUrl);
 
     updateTicket({template});
+}
+
+function convertGitTemplateContent(content, prefix = '-') {
+    if (!content || !content.trim().length) {
+        return '';
+    }
+
+    return content.split(/[\r\n]/g)
+        .filter(
+            item => item.trim().length
+        ).map(
+            item => prefix + ' ' + item.replace(/^-+/, '').trim()
+        ).join('\n');
 }
 
 function chatworkMessageHtml() {
@@ -364,37 +381,45 @@ function chatworkMessage() {
     );
 }
 
-function gitTemplate() {
-    return (
-        '## Related Tickets\n' +
-        '- https://dev.framgia.com/issues/$id\n\n' +
-        '## WHAT this PR do?\n' +
-        '$what\n' +
-        '- File changes:\n' +
-        '$fileChanges\n' +
-        '## WHY\n' +
-        '$why\n\n'  +
-        '## HOW\n' +
-        '$how\n\n'  +
-        '## Checklist\n' +
-        '- [x] Self review in local\n' +
-        '- [x] Check impacted areas\n' +
-        '- [x] My code follow the RULE code of project?\n' +
-        '- [ ] New and existing unit test pass locally with my changes?\n' +
-        '- [x] Fill information for Related Tickets?\n' +
-        '- [x] Fill information for What?\n' +
-        '- [x] Fill information for How?\n' +
-        '- [x] Fill information for Why?\n\n' +
-        '## Notes Impacted Areas\n' +
-        '$impacted\n' +
-        '*(Impacted Areas in Application(List features,' +
-        'api, models or services that this PR will affect))\n' +
-        '*(List gem, library third party add new)*\n' +
-        '*(Checklist)*\n' +
-        '*(Other notes)*\n\n' +
-        '## Performance  (Optional)\n' +
-        '- [ ] Resolved n + 1 query\n' +
-        '- [ ] Time open page : 1000 ms\n' +
-        '- [ ] Generated SQL query (please show query detail below)\n'
-    );
+function gitTemplate(ticketId, what, libaries, impacted, note) {
+return(
+`## Related Tickets
+- [#${ticketId}](https://dev.sun-asterisk.com/redmine/issues/${ticketId})
+
+## What's this PR do ?
+
+${what}
+
+## Library
+*(List gem, library third party add new)*
+
+${libaries}
+
+## Impacted Areas in Application
+*(List features, api, models or services that this PR will affect)*
+
+${impacted}
+
+## Performance
+- [ ] Resolved n + 1 query
+- [ ] Run explain query already
+- [ ] Time run rake task : 1000 ms
+
+## Checklist
+- [x] It was tested in local success?
+- [ ] Updated rake task, environment variable
+- [ ] Updated [API document](https://xxx)
+- [ ] Updated library
+- [x] Fill link PR into ticket and the opposite
+- [x] Note requirement, solution, related link, impacted areas into ticket
+- [ ] Validate UI/Model/API
+- [ ] Add hash code into files
+
+## Deploy Notes
+*(List rake task command, environment variable need config after deploy)*
+
+## Notes
+*(Other notes)*
+
+${note}`)
 }

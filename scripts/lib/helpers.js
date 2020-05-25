@@ -5,9 +5,9 @@ function transformTicket(ticket = null) {
     var defaultObject = new Object;
 
     [
-        'id', 'what', 'why', 'how', 'impacted', 'template', 'status',
+        'id', 'what', 'libaries', 'impacted', 'note', 'template', 'status',
         'done', 'estimatedTime', 'spentTime', 'assignee', 'targetVersion',
-        'startDate', 'dueDate', 'gitUrl','fileChanges'
+        'startDate', 'dueDate', 'gitUrl', 'active', 'fileChanges'
     ]
     .forEach(field => {
         defaultObject[field] = valueWithDefault(ticket, field);
